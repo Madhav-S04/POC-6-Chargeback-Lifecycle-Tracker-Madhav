@@ -1,6 +1,11 @@
 import { useMemo, useState, useEffect } from 'react';
 import api from '@/lib/api';
-import type { ChargebackCase, FilterState } from '@/types/index';
+import type {
+  ChargebackCase,
+  FilterState,
+  ChargebackStats,
+  DisputeOutcomeStats
+} from '@/types/index';
 
 export const useCases = (filters?: FilterState) => {
   const [cases, setCases] = useState<ChargebackCase[]>([]);
@@ -24,13 +29,18 @@ export const useCases = (filters?: FilterState) => {
     };
 
     fetchCases();
-  }, [filters?.status, filters?.merchant]);
+  }, [
+  filters?.status,
+  filters?.merchant,
+  filters?.reason,
+  filters?.network,
+]);
 
   return { cases, loading, error };
 };
 
 export const useStats = () => {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState<ChargebackStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +65,7 @@ export const useStats = () => {
 };
 
 export const useDisputeOutcomes = () => {
-  const [outcomes, setOutcomes] = useState(null);
+  const [outcomes, setOutcomes] = useState<DisputeOutcomeStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

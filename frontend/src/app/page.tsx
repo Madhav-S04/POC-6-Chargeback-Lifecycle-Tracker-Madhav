@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { AlertCircle, Users } from 'lucide-react';
+import { AlertCircle, Users, Database } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SidebarInsight from '@/components/SidebarInsight';
 import FiltersPanel from '@/components/FiltersPanel';
@@ -11,6 +11,8 @@ import CasesTable from '@/components/CasesTable';
 import { useCases, useStats, useDisputeOutcomes } from '@/hooks/useData';
 import { api } from '@/lib/api';
 import type { FilterState, ChargebackCase } from '@/types/index';
+//import ChargebackFlow from '@/components/ChargebackFlow';
+//import IndustryBenchmarks from '@/components/IndustryBenchmarks';
 
 export default function HomePage() {
   const [filters, setFilters] = useState<FilterState>({});
@@ -63,9 +65,12 @@ export default function HomePage() {
       <StatsVisualization
         stats={stats}
         outcomes={outcomes}
+        cases={cases}
         isLoading={statsLoading || outcomesLoading}
       />
-
+      
+     {/* <ChargebackFlow />*/}
+     {/* <IndustryBenchmarks />*/}
       {/* Case Timeline & Table */}
       <div className="grid grid-cols-1 gap-6">
         {caseToDisplay && (
@@ -126,7 +131,19 @@ export default function HomePage() {
           'Processors: Execute transactions',
         ]}
       />
-
+      {/* Data Sources */}
+<SidebarInsight
+  title="Data Provenance"
+  icon={Database}
+  content="This dashboard combines payment rail intelligence from public industry sources with synthetic chargeback records created for demonstration purposes."
+  details={[
+    'CFPB Consumer Complaint Database',
+    'Federal Reserve Payments Study',
+    'Synthetic dispute case history',
+    'Synthetic fraud & merchant evidence records',
+    'Demo Mode: No live customer data'
+  ]}
+/>
       {/* Filters & Tooltips */}
       <FiltersPanel
         filters={filters}

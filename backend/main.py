@@ -99,43 +99,103 @@ def generate_mock_cases() -> List[ChargebackCase]:
 
 
 def generate_mock_timeline(case_id: str) -> List[TimelineEvent]:
-    """Generate timeline for a specific case"""
-    base_date = datetime.now() - timedelta(days=30)
-    
-    timeline = [
-        TimelineEvent(
-            timestamp=(base_date).isoformat(),
-            event_type="opened",
-            description="Dispute initiated by customer",
-            actor="customer"
-        ),
-        TimelineEvent(
-            timestamp=(base_date + timedelta(days=3)).isoformat(),
-            event_type="bank_review",
-            description="Issuing bank begins review process",
-            actor="issuer"
-        ),
-        TimelineEvent(
-            timestamp=(base_date + timedelta(days=5)).isoformat(),
-            event_type="response_submitted",
-            description="Merchant submits evidence and documentation",
-            actor="merchant"
-        ),
-        TimelineEvent(
-            timestamp=(base_date + timedelta(days=15)).isoformat(),
-            event_type="bank_review",
-            description="Bank reviews all evidence and determines outcome",
-            actor="issuer"
-        ),
-        TimelineEvent(
-            timestamp=(base_date + timedelta(days=21)).isoformat(),
-            event_type="resolved",
-            description="Case resolved in favor of merchant",
-            actor="issuer"
-        ),
-    ]
-    
-    return timeline
+    """Generate different timelines based on case id"""
+
+    case_num = int(case_id.split("-")[-1])
+
+    base_date = datetime.now() - timedelta(
+        days=(case_num % 20) + 10
+    )
+
+    pattern = case_num % 4
+
+    if pattern == 0:
+        return [
+            TimelineEvent(
+                timestamp=base_date.isoformat(),
+                event_type="opened",
+                description="Customer initiated dispute",
+                actor="customer",
+            ),
+            TimelineEvent(
+                timestamp=(base_date + timedelta(days=2)).isoformat(),
+                event_type="bank_review",
+                description="Issuing bank started investigation",
+                actor="issuer",
+            ),
+            TimelineEvent(
+                timestamp=(base_date + timedelta(days=5)).isoformat(),
+                event_type="response_submitted",
+                description="Merchant submitted evidence",
+                actor="merchant",
+            ),
+            TimelineEvent(
+                timestamp=(base_date + timedelta(days=11)).isoformat(),
+                event_type="resolved",
+                description="Case resolved in favor of merchant",
+                actor="issuer",
+            ),
+        ]
+
+    elif pattern == 1:
+        return [
+            TimelineEvent(
+                timestamp=base_date.isoformat(),
+                event_type="opened",
+                description="Dispute opened",
+                actor="customer",
+            ),
+            TimelineEvent(
+                timestamp=(base_date + timedelta(days=4)).isoformat(),
+                event_type="bank_review",
+                description="Investigation ongoing",
+                actor="issuer",
+            ),
+        ]
+
+    elif pattern == 2:
+        return [
+            TimelineEvent(
+                timestamp=base_date.isoformat(),
+                event_type="opened",
+                description="Chargeback initiated",
+                actor="customer",
+            ),
+            TimelineEvent(
+                timestamp=(base_date + timedelta(days=3)).isoformat(),
+                event_type="bank_review",
+                description="Evidence requested",
+                actor="issuer",
+            ),
+            TimelineEvent(
+                timestamp=(base_date + timedelta(days=8)).isoformat(),
+                event_type="response_submitted",
+                description="Merchant submitted supporting documents",
+                actor="merchant",
+            ),
+        ]
+
+    else:
+        return [
+            TimelineEvent(
+                timestamp=base_date.isoformat(),
+                event_type="opened",
+                description="Fraud dispute initiated",
+                actor="customer",
+            ),
+            TimelineEvent(
+                timestamp=(base_date + timedelta(days=5)).isoformat(),
+                event_type="bank_review",
+                description="Issuer investigation completed",
+                actor="issuer",
+            ),
+            TimelineEvent(
+                timestamp=(base_date + timedelta(days=9)).isoformat(),
+                event_type="resolved",
+                description="Resolved in favor of customer",
+                actor="issuer",
+            ),
+        ]
 
 
 # ==================== API ENDPOINTS ====================
@@ -154,6 +214,8 @@ async def root():
 async def get_cases(
     status: Optional[str] = None,
     merchant: Optional[str] = None,
+    reason: Optional[str] = None,
+    network: Optional[str] = None,
     limit: int = 50
 ):
     """
@@ -168,12 +230,79 @@ async def get_cases(
     
     if status:
         cases = [c for c in cases if c.case_status == status]
-    
+
     if merchant:
         cases = [c for c in cases if merchant.lower() in c.merchant_name.lower()]
+
+    if reason:
+        cases = [c for c in cases if c.dispute_reason == reason]
+
+    if network:
+        cases = [c for c in cases if c.card_network == network]
     
     return cases[:limit]
 
+def generate_timeline_for_status(
+    case_status: str
+) -> List[TimelineEvent]:
+
+    base_date = datetime.now() - timedelta(days=14)
+
+    opened_event = TimelineEvent(
+        timestamp=base_date.isoformat(),
+        event_type="opened",
+        description="Customer initiated dispute",
+        actor="customer",
+    )
+
+    review_event = TimelineEvent(
+        timestamp=(base_date + timedelta(days=2)).isoformat(),
+        event_type="bank_review",
+        description="Issuing bank started investigation",
+        actor="issuer",
+    )
+
+    response_event = TimelineEvent(
+        timestamp=(base_date + timedelta(days=5)).isoformat(),
+        event_type="response_submitted",
+        description="Merchant submitted evidence",
+        actor="merchant",
+    )
+
+    resolved_event = TimelineEvent(
+        timestamp=(base_date + timedelta(days=10)).isoformat(),
+        event_type="resolved",
+        description="Case resolved",
+        actor="issuer",
+    )
+
+    if case_status == "opened":
+        return [
+            opened_event
+        ]
+
+    if case_status == "under_review":
+        return [
+            opened_event,
+            review_event,
+        ]
+
+    if case_status == "merchant_response":
+        return [
+            opened_event,
+            review_event,
+            response_event,
+        ]
+
+    if case_status == "resolved":
+        return [
+            opened_event,
+            review_event,
+            response_event,
+            resolved_event,
+        ]
+
+    return [opened_event]
 
 @app.get("/api/cases/{case_id}", response_model=ChargebackCase)
 async def get_case(case_id: str):
@@ -189,8 +318,21 @@ async def get_case(case_id: str):
 
 @app.get("/api/cases/{case_id}/timeline", response_model=List[TimelineEvent])
 async def get_case_timeline(case_id: str):
-    """Retrieve the timeline of events for a specific case"""
-    return generate_mock_timeline(case_id)
+    """Retrieve timeline matching actual case status"""
+
+    cases = generate_mock_cases()
+
+    case = next(
+        (c for c in cases if c.id == case_id),
+        None
+    )
+
+    if not case:
+        return []
+
+    return generate_timeline_for_status(
+        case.case_status
+    )
 
 
 @app.get("/api/stats", response_model=ChargebackStats)

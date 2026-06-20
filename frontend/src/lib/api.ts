@@ -17,8 +17,7 @@ const client = axios.create({
 // Error handling wrapper
 const handleApiError = (error: any) => {
   console.error('API Error:', error);
-  // Return mock data on error (2-Hour Rule fallback)
-  return { error: error.message, mockData: true };
+  throw error;
 };
 
 export const api = {
@@ -27,10 +26,12 @@ export const api = {
     try {
       const { data } = await client.get<ChargebackCase[]>('/api/cases', {
         params: {
-          status: filters?.status,
-          merchant: filters?.merchant,
-          limit,
-        },
+  status: filters?.status,
+  merchant: filters?.merchant,
+  reason: filters?.reason,
+  network: filters?.network,
+  limit,
+},
       });
       return data;
     } catch (error) {
