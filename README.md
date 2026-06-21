@@ -159,7 +159,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ### Dashboard Overview
 
-![Dashboard Overview](screenshots/dashboard-overview.png)
+![Dashboard Overview](c:\Users\madha\OneDrive\الصور\Screenshots\Screenshot 2026-06-21 144646.png)
 
 ### Chargeback Case Timeline
 
