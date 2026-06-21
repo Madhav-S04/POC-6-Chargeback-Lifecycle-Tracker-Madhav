@@ -157,8 +157,15 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ## Screenshots
 
+![](images/1.png)
 
+![](images/2.png)
 
+![](images/3.png)
+
+![](images/4.png)
+
+![](images/5.png)
 
 ---
 
